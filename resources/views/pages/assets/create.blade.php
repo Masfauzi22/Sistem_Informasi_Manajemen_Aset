@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        {{-- Style judul disamakan --}}
+        <h2 class="font-bold text-2xl text-[#8c8f8b] leading-tight">
             {{ __('Tambah Aset Baru') }}
         </h2>
     </x-slot>
@@ -19,7 +20,6 @@
                             <label for="name"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nama
                                 Aset</label>
-                            {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                             <input type="text" name="name" id="name" value="{{ old('name') }}"
                                 class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
@@ -28,7 +28,6 @@
                         <div class="mb-4">
                             <label for="category_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Kategori</label>
-                            {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                             <select name="category_id" id="category_id"
                                 class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
                                 <option disabled selected>Pilih Kategori</option>
@@ -42,7 +41,6 @@
                         <div class="mb-4">
                             <label for="location_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Lokasi</label>
-                            {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                             <select name="location_id" id="location_id"
                                 class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
                                 <option disabled selected>Pilih Lokasi</option>
@@ -57,7 +55,6 @@
                             <label for="serial_number"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nomor
                                 Seri</label>
-                            {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                             <input type="text" name="serial_number" id="serial_number"
                                 value="{{ old('serial_number') }}"
                                 class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
@@ -69,7 +66,6 @@
                                 <label for="purchase_date"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Tanggal
                                     Beli</label>
-                                {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                                 <input type="date" name="purchase_date" id="purchase_date"
                                     value="{{ old('purchase_date') }}"
                                     class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
@@ -78,7 +74,6 @@
                                 <label for="purchase_price"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Harga Beli
                                     (Rp)</label>
-                                {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                                 <input type="number" name="purchase_price" id="purchase_price"
                                     value="{{ old('purchase_price') }}"
                                     class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
@@ -89,7 +84,6 @@
                         <div class="mb-4">
                             <label for="status"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Status</label>
-                            {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                             <select name="status" id="status"
                                 class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="Tersedia">Tersedia</option>
@@ -103,16 +97,20 @@
                         <div class="mb-4">
                             <label for="description"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Deskripsi</label>
-                            {{-- TAMBAHKAN KELAS WARNA FONT DI SINI --}}
                             <textarea name="description" id="description" rows="3"
                                 class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">{{ old('description') }}</textarea>
                         </div>
 
+                        {{-- Tombol Batal dan Simpan dengan style lengkap --}}
                         <div class="flex items-center justify-end mt-6">
                             <a href="{{ route('aset.index') }}"
-                                class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-600 ...">Batal</a>
+                                class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-gray-800 dark:text-gray-200 uppercase tracking-widest hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                                Batal
+                            </a>
                             <button type="submit"
-                                class="ms-4 inline-flex items-center px-4 py-2 bg-blue-600 ...">Simpan</button>
+                                class="ms-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                                Simpan
+                            </button>
                         </div>
                     </form>
 

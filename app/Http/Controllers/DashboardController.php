@@ -7,16 +7,14 @@ use App\Models\Category;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon; // Panggil library Carbon untuk manajemen tanggal
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Ambil periode filter dari URL, default-nya 'all_time'
         $period = $request->input('period', 'all_time');
 
-        // 2. Tentukan rentang tanggal berdasarkan periode
         $startDate = null;
         $endDate = null;
 
@@ -28,55 +26,55 @@ class DashboardController extends Controller
             $endDate = Carbon::now()->endOfYear();
         }
 
-        // 3. Buat query dasar untuk Aset
-        $assetQuery = Asset::query();
+        // ========================================================
+        // PERUBAHAN LOGIKA DI SINI
+        // ========================================================
+        // Buat Query Dasar untuk Aset yang BUKAN 'Menunggu Persetujuan'
+        $approvedAssetsQuery = Asset::where('status', '!=', 'Menunggu Persetujuan');
+
         if ($startDate && $endDate) {
-            // Gunakan `created_at` untuk data baru, atau `purchase_date` jika lebih sesuai
-            $assetQuery->whereBetween('created_at', [$startDate, $endDate]);
+            $approvedAssetsQuery->whereBetween('created_at', [$startDate, $endDate]);
         }
 
-        // 4. Hitung ulang semua data berdasarkan query yang sudah difilter
-        $assetCount = $assetQuery->count();
-        $assetValue = $assetQuery->sum('purchase_price'); // sum juga akan mengikuti filter
+        // Hitung data kartu statistik dari query yang sudah difilter
+        $assetCount = (clone $approvedAssetsQuery)->count();
+        $assetValue = (clone $approvedAssetsQuery)->sum('purchase_price');
 
-        // Data untuk Grafik (juga difilter)
-        $categoryQuery = Category::query();
-        if ($startDate && $endDate) {
-            // Filter kategori yang memiliki aset yang dibuat dalam rentang waktu
-            $categoryQuery->whereHas('assets', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
-            });
-        }
-        $categoriesWithAssetCount = $categoryQuery->withCount(['assets' => function ($q) use ($startDate, $endDate) {
+        // Hitung data untuk Grafik Kategori dari aset yang sudah disetujui
+        $categoriesWithAssetCount = Category::whereHas('assets', function ($query) use ($startDate, $endDate) {
+            $query->where('status', '!=', 'Menunggu Persetujuan');
             if ($startDate && $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+        })->withCount(['assets' => function ($query) use ($startDate, $endDate) {
+            $query->where('status', '!=', 'Menunggu Persetujuan');
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
             }
         }])->get();
         
         $categoryLabels = $categoriesWithAssetCount->pluck('name');
         $categoryData = $categoriesWithAssetCount->pluck('assets_count');
         
-        // Filter untuk data status
-        $statusQuery = Asset::query();
-        if ($startDate && $endDate) {
-            $statusQuery->whereBetween('created_at', [$startDate, $endDate]);
-        }
-        $assetByStatus = $statusQuery->select('status', DB::raw('count(*) as total'))->groupBy('status')->get();
+        // Hitung data untuk Grafik Status dari aset yang sudah disetujui
+        $assetByStatus = (clone $approvedAssetsQuery)->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')->get();
         $statusLabels = $assetByStatus->pluck('status');
         $statusData = $assetByStatus->pluck('total');
         
-        // Tabel Informasi Cepat (juga difilter)
+        // Tabel Informasi Cepat (ini tidak berubah, tujuannya tetap sama)
         $recentAssets = Asset::with(['category', 'location'])->latest()->limit(5)->get();
-        $attentionAssets = Asset::with(['category', 'location'])->whereIn('status', ['Rusak', 'Dalam Perbaikan'])->limit(5)->get();
+        $attentionAssets = Asset::with(['category', 'location'])
+            ->whereIn('status', ['Rusak', 'Dalam Perbaikan'])->limit(5)->get();
         
-        $locationCount = Location::count(); // Location & Category count tidak difilter
+        // Total Kategori dan Lokasi tidak berubah
+        $locationCount = Location::count();
         $categoryCount = Category::count();
 
-        // Kirim semua data ke view, termasuk variabel 'period'
         return view('dashboard', compact(
             'assetCount', 'categoryCount', 'locationCount', 'assetValue',
             'categoryLabels', 'categoryData', 'statusLabels', 'statusData',
-            'recentAssets', 'attentionAssets', 'period' // tambahkan 'period'
+            'recentAssets', 'attentionAssets', 'period'
         ));
     }
 }

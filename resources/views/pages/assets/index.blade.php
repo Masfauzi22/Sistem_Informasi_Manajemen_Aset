@@ -20,10 +20,13 @@
 
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold">Daftar Aset Perusahaan</h3>
+                        {{-- Tombol Tambah diamankan dengan permission 'create assets' --}}
+                        @can('create assets')
                         <a href="{{ route('aset.create') }}"
                             class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
                             Tambah Aset
                         </a>
+                        @endcan
                     </div>
 
                     <div class="mb-4">
@@ -47,44 +50,35 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        No</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Nama Aset</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Kategori</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Lokasi</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        No. Seri</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Harga</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Aksi</th>
+                                    <th class="px-6 py-3 ...">No</th>
+                                    <th class="px-6 py-3 ...">Nama Aset</th>
+                                    <th class="px-6 py-3 ...">Kategori</th>
+                                    <th class="px-6 py-3 ...">Lokasi</th>
+                                    <th class="px-6 py-3 ...">No. Seri</th>
+                                    <th class="px-6 py-3 ...">Harga</th>
+                                    <th class="px-6 py-3 ...">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @forelse ($assets as $asset)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <td class="px-6 py-4 ...">
                                         {{ $loop->iteration + ($assets->currentPage() - 1) * $assets->perPage() }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ $asset->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $asset->category->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $asset->location->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $asset->serial_number ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">Rp
+                                    <td class="px-6 py-4 ...">{{ $asset->name }}</td>
+                                    <td class="px-6 py-4 ...">{{ $asset->category->name }}</td>
+                                    <td class="px-6 py-4 ...">{{ $asset->location->name }}</td>
+                                    <td class="px-6 py-4 ...">{{ $asset->serial_number ?? '-' }}</td>
+                                    <td class="px-6 py-4 ...">Rp
                                         {{ number_format($asset->purchase_price, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+
+                                        {{-- PERUBAHAN DI SINI: Izin dibuat lebih spesifik --}}
+                                        @can('edit assets')
                                         <a href="{{ route('aset.edit', $asset) }}"
                                             class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded text-xs">Edit</a>
+                                        @endcan
+
+                                        @can('delete assets')
                                         <form action="{{ route('aset.destroy', $asset) }}" method="POST"
                                             class="inline-block">
                                             @csrf
@@ -95,14 +89,12 @@
                                                 Hapus
                                             </button>
                                         </form>
+                                        @endcan
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7"
-                                        class="px-6 py-4 whitespace-nowrap text-center text-gray-500 dark:text-gray-400">
-                                        Data tidak ditemukan.
-                                    </td>
+                                    <td colspan="7" class="px-6 py-4 text-center ...">Data tidak ditemukan.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

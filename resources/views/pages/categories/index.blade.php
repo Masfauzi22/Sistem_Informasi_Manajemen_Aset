@@ -20,7 +20,6 @@
 
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold">Daftar Kategori Aset</h3>
-                        {{-- Tombol dengan style yang sudah lengkap dan benar --}}
                         <a href="{{ route('kategori.create') }}"
                             class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
                             Tambah Kategori
@@ -73,6 +72,9 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <a href="{{ route('kategori.edit', $kategori) }}"
                                             class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded text-xs">Edit</a>
+
+                                        {{-- PERUBAHAN DARI @role MENJADI @can --}}
+                                        @can('manage categories')
                                         <form action="{{ route('kategori.destroy', $kategori) }}" method="POST"
                                             class="inline-block">
                                             @csrf
@@ -83,14 +85,14 @@
                                                 Hapus
                                             </button>
                                         </form>
+                                        @endcan
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
                                     <td colspan="4"
                                         class="px-6 py-4 whitespace-nowrap text-center text-gray-500 dark:text-gray-400">
-                                        Data tidak ditemukan.
-                                    </td>
+                                        Data tidak ditemukan.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

@@ -1,13 +1,14 @@
-<div class="w-64 min-h-screen bg-[#2c4155] text-white p-4">
+<div class="w-64 min-h-screen bg-[#2c4155] text-white p-4 flex flex-col">
     <div class="mb-10 px-4">
         <a href="{{ route('dashboard') }}">
             <img src="{{ asset('images/logo-pelindo.png') }}" alt="Logo Perusahaan" class="w-auto h-12 mx-auto">
         </a>
     </div>
 
-    <nav>
+    <nav class="flex-grow">
+        {{-- Menu yang bisa dilihat semua orang --}}
         <a href="{{ route('dashboard') }}"
-            class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700">
+            class="flex items-center py-2.5 px-4 rounded-lg transition duration-200 {{ request()->routeIs('dashboard') ? 'bg-blue-600' : 'hover:bg-blue-700' }}">
             <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                 stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -15,10 +16,8 @@
             </svg>
             <span>Dashboard</span>
         </a>
-
-        {{-- INI BAGIAN YANG DIPERBAIKI --}}
         <a href="{{ route('aset.index') }}"
-            class="flex items-center mt-2 py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700">
+            class="flex items-center mt-2 py-2.5 px-4 rounded-lg transition duration-200 {{ request()->routeIs('aset.*') ? 'bg-blue-600' : 'hover:bg-blue-700' }}">
             <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                 stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -27,8 +26,12 @@
             <span>Manajemen Aset</span>
         </a>
 
+        {{-- GRUP MENU UNTUK ADMIN --}}
+        @role('admin')
+        <p class="px-4 pt-4 pb-2 text-xs text-gray-400 uppercase tracking-wider">Administrasi</p>
+
         <a href="{{ route('kategori.index') }}"
-            class="flex items-center mt-2 py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700">
+            class="flex items-center mt-2 py-2.5 px-4 rounded-lg transition duration-200 {{ request()->routeIs('kategori.*') ? 'bg-blue-600' : 'hover:bg-blue-700' }}">
             <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                 stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -38,7 +41,7 @@
             <span>Kategori</span>
         </a>
         <a href="{{ route('lokasi.index') }}"
-            class="flex items-center mt-2 py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700">
+            class="flex items-center mt-2 py-2.5 px-4 rounded-lg transition duration-200 {{ request()->routeIs('lokasi.*') ? 'bg-blue-600' : 'hover:bg-blue-700' }}">
             <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                 stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -47,5 +50,15 @@
             </svg>
             <span>Lokasi</span>
         </a>
+        <a href="{{ route('users.index') }}"
+            class="flex items-center mt-2 py-2.5 px-4 rounded-lg transition duration-200 {{ request()->routeIs('users.*') ? 'bg-blue-600' : 'hover:bg-blue-700' }}">
+            <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.53-2.475M15 19.128v-3.386m0 3.386v3.387m0-3.387a6.375 6.375 0 0 0-1.257-4.243M15 19.128V9.75A2.25 2.25 0 0 0 12.75 7.5h-3.75a2.25 2.25 0 0 0-2.25 2.25v9.375m7.5-3.375H5.625m7.5-3.375v-1.5a2.25 2.25 0 0 0-2.25-2.25H5.625a2.25 2.25 0 0 0-2.25 2.25v1.5m7.5 0v-1.5a2.25 2.25 0 0 0-2.25-2.25H5.625a2.25 2.25 0 0 0-2.25 2.25v1.5" />
+            </svg>
+            <span>Manajemen Pengguna</span>
+        </a>
+        @endrole
     </nav>
 </div>
