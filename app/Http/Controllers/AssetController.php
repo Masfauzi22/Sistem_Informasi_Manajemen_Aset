@@ -113,4 +113,39 @@ class AssetController extends Controller
         
         return redirect()->route('aset.index')->with('success', 'Aset berhasil dihapus.');
     }
+    
+    public function approvalList()
+    {
+        $this->authorize('approve assets');
+
+        // PERUBAHAN DI SINI: dari get() atau paginate(10) menjadi paginate(5)
+        $pendingAssets = Asset::with(['category', 'location'])
+            ->where('status', 'Menunggu Persetujuan')
+            ->latest()
+            ->paginate(5); // Hanya menampilkan 5 data per halaman
+            
+        return view('pages.assets.approval', compact('pendingAssets'));
+    }
+    
+    public function approve(Asset $aset)
+    {
+        $this->authorize('approve assets');
+
+        // Ubah status aset menjadi 'Tersedia'
+        $aset->status = 'Tersedia';
+        $aset->save();
+
+        return redirect()->route('aset.approval')->with('success', 'Aset telah disetujui dan sekarang aktif.');
+    }
+
+    public function reject(Asset $aset)
+    {
+        $this->authorize('approve assets');
+
+        // Untuk saat ini, jika ditolak, kita hapus datanya.
+        // Nanti bisa diubah menjadi status 'Ditolak'.
+        $aset->delete();
+
+        return redirect()->route('aset.approval')->with('success', 'Pengajuan aset telah ditolak.');
+    }
 }
