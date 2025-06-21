@@ -9,6 +9,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MaintenanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,7 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('aset', AssetController::class);
     Route::resource('pinjam', LoanController::class);
     Route::post('pinjam/{loan}/return', [LoanController::class, 'returnAsset'])->name('pinjam.return');
-
+    Route::resource('perawatan', MaintenanceController::class);
+    
     // --- RUTE PERSETUJUAN (Approval) ---
     Route::get('approval', [AssetController::class, 'approvalList'])->name('aset.approval')->middleware('permission:approve assets');
     Route::post('approval/{aset}/approve', [AssetController::class, 'approve'])->name('aset.approve')->middleware('permission:approve assets');
