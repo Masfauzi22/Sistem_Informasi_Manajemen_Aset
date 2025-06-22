@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
 {
@@ -148,4 +149,26 @@ class AssetController extends Controller
 
         return redirect()->route('aset.approval')->with('success', 'Pengajuan aset telah ditolak.');
     }
+
+    public function generateAssetReportPDF()
+    {
+        $this->authorize('generate reports');
+
+        // 1. Ambil semua data aset yang aktif
+        $assets = Asset::with(['category', 'location'])->where('status', 'Tersedia')->get();
+
+        // 2. Siapkan data untuk dikirim ke view
+        $data = [
+            'date' => date('d/m/Y'),
+            'assets' => $assets
+        ];
+
+        // 3. Muat view PDF dengan data
+        $pdf = PDF::loadView('pages.assets.report-pdf', $data);
+
+        // 4. Download file PDF dengan nama tertentu
+        return $pdf->download('laporan-aset-pelindo.pdf');
+    }
+
+    
 }

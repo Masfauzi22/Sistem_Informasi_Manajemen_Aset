@@ -7,13 +7,12 @@
     </div>
 
     {{-- BAGIAN NAVIGASI (AREA YANG BISA DI-SCROLL) --}}
-    {{-- Tambahkan kelas `custom-scrollbar` di sini --}}
     <nav class="flex-1 px-4 pb-4 space-y-4 overflow-y-auto custom-scrollbar">
 
         {{-- Grup Menu Utama --}}
         <div>
-            {{-- Menggunakan pt-4 untuk konsistensi jarak atas --}}
-            <p class="pt-4 pb-2 text-xs text-gray-500 uppercase tracking-wider">Utama</p>
+            {{-- Menambahkan kelas px-4 agar rata dengan grup lainnya --}}
+            <p class="px-4 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-wider">Utama</p>
             <div class="space-y-2">
                 <a href="{{ route('dashboard') }}"
                     class="flex items-center py-2.5 px-4 rounded-lg relative transition-all duration-300 ease-in-out {{ request()->routeIs('dashboard') ? 'bg-sky-800 text-white font-semibold shadow-lg' : 'hover:bg-sky-800/50 hover:text-white' }}">
@@ -42,7 +41,6 @@
 
         {{-- Grup Menu Operasional --}}
         <div>
-            {{-- Hapus mt-4 dari sini, space-y-4 pada nav sudah cukup --}}
             <p class="px-4 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-wider border-t border-gray-700/50">
                 Operasional</p>
             <div class="space-y-2">
@@ -87,13 +85,15 @@
 
         {{-- Grup Menu Laporan --}}
         <div>
-            {{-- Hapus mt-4 dari sini, space-y-4 pada nav sudah cukup --}}
-            <p class="px-4 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-wider border-t border-gray-700/50">Laporan
+            <p class="px-4 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-wider border-t border-gray-700/50">
+                Laporan
             </p>
             <div class="space-y-2">
-                <a href="#"
-                    class="flex items-center py-2.5 px-4 rounded-lg relative transition-all duration-300 ease-in-out hover:bg-sky-800/50 hover:text-white">
-                    <span class="absolute left-0 top-0 h-full w-1 rounded-r-full bg-transparent"></span>
+                @can('generate reports') {{-- Directive @can yang baru --}}
+                <a href="{{ route('laporan.index') }}" {{-- Diubah ke route laporan.index --}}
+                    class="flex items-center py-2.5 px-4 rounded-lg relative transition-all duration-300 ease-in-out {{ request()->routeIs('laporan.*') ? 'bg-sky-800 text-white font-semibold shadow-lg' : 'hover:bg-sky-800/50 hover:text-white' }}">
+                    <span
+                        class="absolute left-0 top-0 h-full w-1 rounded-r-full transition-all duration-300 {{ request()->routeIs('laporan.*') ? 'bg-sky-400' : 'bg-transparent' }}"></span>
                     <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                         stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -101,12 +101,12 @@
                     </svg>
                     <span>Laporan Aset</span>
                 </a>
+                @endcan
             </div>
         </div>
 
         {{-- Grup Menu Administrasi --}}
         @role('admin')
-        {{-- Hapus mt-4 dari sini, space-y-4 pada nav sudah cukup --}}
         <p class="px-4 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-wider border-t border-gray-700/50">
             Administrasi</p>
         <div class="space-y-2">

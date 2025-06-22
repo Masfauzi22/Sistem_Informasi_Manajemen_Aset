@@ -10,6 +10,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('pinjam', LoanController::class);
     Route::post('pinjam/{loan}/return', [LoanController::class, 'returnAsset'])->name('pinjam.return');
     Route::resource('perawatan', MaintenanceController::class);
+    
+    // RUTE BARU: Untuk generate laporan aset
+    Route::get('aset-report-pdf', [AssetController::class, 'generateAssetReportPDF'])->name('aset.report.pdf')->middleware('permission:generate reports');
+
+    // --- RUTE UNTUK LAPORAN ---
+    Route::get('/laporan', [ReportController::class, 'index'])->name('laporan.index')->middleware('permission:generate reports');
+    
+    // PASTIKAN INI MENGGUNAKAN Route::get
+    Route::get('/laporan/generate', [ReportController::class, 'generate'])->name('laporan.generate')->middleware('permission:generate reports');
+
     
     // --- RUTE PERSETUJUAN (Approval) ---
     Route::get('approval', [AssetController::class, 'approvalList'])->name('aset.approval')->middleware('permission:approve assets');
