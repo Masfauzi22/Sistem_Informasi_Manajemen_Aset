@@ -1,61 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ✨ Sistem Manajemen Aset (Studi Kasus Pelindo Surabaya) ✨
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Selamat datang di repositori **Sistem Manajemen Aset** ini! 👋
 
-## About Laravel
+Proyek ini adalah bagian dari portofolio saya, sebuah inisiatif digital yang dirancang untuk merevolusi pengelolaan aset, dengan mengambil **studi kasus Pelindo Surabaya**. Saya berupaya menciptakan solusi yang:
+🚀 **Terintegrasi:** Menghubungkan berbagai aspek manajemen aset dalam satu platform.
+⚡ **Efisien:** Mengoptimalkan alur kerja dan mengurangi beban manual.
+🛡️ **Andal:** Memastikan data aset akurat dan sistem berjalan stabil.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 🚀 Cara Menjalankan Proyek Ini (Setup Lokal)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan pengembangan lokal Anda:
 
-## Learning Laravel
+1.  **Clone Repositori:**
+    Buka Terminal atau Command Prompt dan unduh proyek ini:
+    ```bash
+    git clone https://github.com/Masfauzi22/pelindo_asset_management.git
+    ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+2.  **Masuk ke Direktori Proyek:**
+    ```bash
+    cd pelindo_asset_management
+    ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+3.  **Install Dependensi PHP (Composer):**
+    Pastikan Anda memiliki Composer terinstal.
+    ```bash
+    composer install
+    ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+4.  **Siapkan File Environment (.env):**
+    Ini adalah file konfigurasi penting.
+    ```bash
+    cp .env.example .env
+    # Jika di Windows dan 'cp' tidak berfungsi, coba:
+    # copy .env.example .env
+    ```
 
-## Laravel Sponsors
+5.  **Generate Application Key:**
+    ```bash
+    php artisan key:generate
+    ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+6.  **Konfigurasi Database:**
+    * Buka file `.env` yang baru dibuat.
+    * Sesuaikan kredensial database ( `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, dll.) agar sesuai dengan pengaturan database lokal Anda (misalnya MySQL).
+    * **Penting:** Pastikan Anda sudah membuat database kosong dengan nama yang sesuai di phpMyAdmin atau tool database Anda (contoh: `pelindo_asset_management_db`).
 
-### Premium Partners
+7.  **Jalankan Migrasi Database:**
+    Ini akan membuat semua tabel database yang diperlukan.
+    ```bash
+    php artisan migrate
+    ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+8.  **(Opsional) Jalankan Seeder Database:**
+    Jika ada data awal atau dummy yang perlu dimasukkan ke database:
+    ```bash
+    php artisan db:seed
+    ```
 
-## Contributing
+9.  **Install Dependensi Frontend (Node.js & npm/Yarn):**
+    Pastikan Anda memiliki Node.js dan npm terinstal.
+    ```bash
+    npm install
+    # Atau jika menggunakan Yarn: yarn install
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+10. **Jalankan Vite (Frontend Assets):**
+    Ini akan mengkompilasi aset frontend dan menjalankan server Vite untuk pengembangan.
+    ```bash
+    npm run dev
+    ```
 
-## Code of Conduct
+11. **Jalankan Server Pengembangan Laravel:**
+    ```bash
+    php artisan serve
+    ```
+    Aplikasi akan tersedia di `http://127.0.0.1:8000` (atau port lain yang ditampilkan).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+### 💡 Kolaborasi & Manfaat Bersama
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+> Proyek ini dikembangkan sebagai bentuk portofolio pribadi dan dengan harapan dapat memberikan **manfaat serta inspirasi** bagi siapa saja yang tertarik di bidang manajemen aset atau pengembangan aplikasi, khususnya dengan studi kasus yang relevan dengan industri pelabuhan.
+>
+> Saya sangat terbuka untuk diskusi, berbagi ide, atau jika Anda memiliki pertanyaan seputar implementasi kode ini. Mari belajar dan berkembang bersama!
+>
+> **Jika Anda ingin memahami lebih dalam source code ini, berdiskusi, atau berkolaborasi, silakan hubungi saya:**
+> 📲 **WhatsApp: 0823-3742-8199**
+> *(Atau melalui GitHub issues/discussions di repositori ini)*
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 🛠️ Teknologi yang Kami Gunakan:
+
+Proyek ini dibangun dengan fondasi teknologi modern untuk performa dan skalabilitas terbaik:
+* **PHP 🐘:** Bahasa pemrograman utama.
+* **Laravel 💖:** Framework PHP yang robust dan elegan.
+* **MySQL 🗄️:** Sistem manajemen database relasional.
+* **Tailwind CSS 🎨:** Framework CSS utility-first untuk desain responsif dan cepat.
+* **Vite ⚡:** Modern frontend build tool untuk pengembangan yang cepat.
+* **JavaScript 🌐:** Untuk interaktivitas di sisi klien.
+
+---
+
+Terima kasih atas kunjungan Anda dan semoga bermanfaat! 🙏
