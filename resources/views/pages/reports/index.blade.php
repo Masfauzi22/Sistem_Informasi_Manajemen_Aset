@@ -44,6 +44,46 @@
                                 @enderror
                             </div>
 
+                            {{-- Filter Kategori dan Lokasi (DITAMBAHKAN) --}}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label for="category_id"
+                                        class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Filter
+                                        per Kategori (Opsional)</label>
+                                    <select id="category_id" name="category_id"
+                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm p-3 transition ease-in-out duration-150">
+                                        <option value="">Semua Kategori</option>
+                                        @foreach($categories as $category)
+                                        <option value="{{ $category->id }}"
+                                            {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @error('category_id')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="location_id"
+                                        class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Filter
+                                        per Lokasi (Opsional)</label>
+                                    <select id="location_id" name="location_id"
+                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm p-3 transition ease-in-out duration-150">
+                                        <option value="">Semua Lokasi</option>
+                                        @foreach($locations as $location)
+                                        <option value="{{ $location->id }}"
+                                            {{ old('location_id') == $location->id ? 'selected' : '' }}>
+                                            {{ $location->name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @error('location_id')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
                             {{-- Filter Tanggal --}}
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>

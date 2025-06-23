@@ -7,7 +7,8 @@ use App\Models\Category;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage; // Pastikan ini ada
+use Barryvdh\DomPDF\Facade\Pdf; // Pastikan ini tetap ada untuk generate PDF
 
 class AssetController extends Controller
 {
@@ -54,10 +55,21 @@ class AssetController extends Controller
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
             'purchase_date' => 'required|date',
             'purchase_price' => 'required|numeric|min:0',
-            'status' => 'required|string',
+            'status' => 'required|string', // Status awal akan ditimpa jika bukan admin
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar
         ]);
 
         $data = $request->all();
+
+        // LOGIKA UPLOAD GAMBAR SAAT MEMBUAT ASET BARU
+        if ($request->hasFile('image')) {
+            // Simpan gambar ke folder 'public/images/assets'
+            // dan simpan path-nya ke dalam variabel $data
+            $data['image'] = $request->file('image')->store('images/assets', 'public');
+        } else {
+            // Jika tidak ada gambar diupload, pastikan kolom image null atau kosong
+            $data['image'] = null; 
+        }
 
         // LOGIKA APPROVAL: Tentukan status aset berdasarkan peran user
         if (!auth()->user()->hasRole('admin')) {
@@ -72,13 +84,14 @@ class AssetController extends Controller
 
     public function show(Asset $aset)
     {
-        // Untuk saat ini kita tidak menggunakan halaman detail tunggal
+        // Anda bisa mengimplementasikan halaman detail aset di sini jika diperlukan
+        // Contoh: return view('pages.assets.show', compact('aset'));
     }
 
     public function edit(Asset $aset)
     {
         // Pengecekan izin: apakah user boleh mengedit aset ini?
-        $this->authorize('edit assets', $aset);
+        $this->authorize('edit assets', $aset); // Pastikan $aset diteruskan ke authorize
 
         $categories = Category::all();
         $locations = Location::all();
@@ -88,7 +101,7 @@ class AssetController extends Controller
     public function update(Request $request, Asset $aset)
     {
         // Pengecekan izin: apakah user boleh mengupdate aset ini?
-        $this->authorize('edit assets', $aset);
+        $this->authorize('edit assets', $aset); // Pastikan $aset diteruskan ke authorize
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -98,9 +111,31 @@ class AssetController extends Controller
             'purchase_date' => 'required|date',
             'purchase_price' => 'required|numeric|min:0',
             'status' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar
         ]);
         
-        $aset->update($request->all());
+        $data = $request->all();
+
+        // LOGIKA UPDATE GAMBAR
+        if ($request->hasFile('image')) {
+            // Hapus gambar lama jika ada
+            if ($aset->image && Storage::disk('public')->exists($aset->image)) {
+                Storage::disk('public')->delete($aset->image);
+            }
+            // Simpan gambar baru
+            $data['image'] = $request->file('image')->store('images/assets', 'public');
+        } elseif ($request->input('clear_image')) { // Tambahkan input tersembunyi untuk menghapus gambar
+            if ($aset->image && Storage::disk('public')->exists($aset->image)) {
+                Storage::disk('public')->delete($aset->image);
+            }
+            $data['image'] = null;
+        } else {
+            // Jika tidak ada gambar baru diupload dan tidak ada permintaan hapus, 
+            // biarkan gambar yang sudah ada (jangan diupdate)
+            unset($data['image']); 
+        }
+
+        $aset->update($data);
         
         return redirect()->route('aset.index')->with('success', 'Aset berhasil diperbarui.');
     }
@@ -110,6 +145,11 @@ class AssetController extends Controller
         // Pengecekan izin: apakah user boleh menghapus aset ini?
         $this->authorize('delete assets', $aset);
         
+        // Hapus gambar terkait sebelum menghapus aset
+        if ($aset->image && Storage::disk('public')->exists($aset->image)) {
+            Storage::disk('public')->delete($aset->image);
+        }
+
         $aset->delete();
         
         return redirect()->route('aset.index')->with('success', 'Aset berhasil dihapus.');
@@ -119,11 +159,10 @@ class AssetController extends Controller
     {
         $this->authorize('approve assets');
 
-        // PERUBAHAN DI SINI: dari get() atau paginate(10) menjadi paginate(5)
         $pendingAssets = Asset::with(['category', 'location'])
             ->where('status', 'Menunggu Persetujuan')
             ->latest()
-            ->paginate(5); // Hanya menampilkan 5 data per halaman
+            ->paginate(5); 
             
         return view('pages.assets.approval', compact('pendingAssets'));
     }
@@ -143,9 +182,15 @@ class AssetController extends Controller
     {
         $this->authorize('approve assets');
 
-        // Untuk saat ini, jika ditolak, kita hapus datanya.
-        // Nanti bisa diubah menjadi status 'Ditolak'.
-        $aset->delete();
+        // Opsi: Ubah status menjadi 'Ditolak' (direkomendasikan untuk riwayat)
+        $aset->status = 'Ditolak'; 
+        $aset->save();
+
+        // Jika Anda tetap ingin menghapus aset saat ditolak, gunakan kode di bawah ini:
+        // if ($aset->image && Storage::disk('public')->exists($aset->image)) {
+        //     Storage::disk('public')->delete($aset->image);
+        // }
+        // $aset->delete();
 
         return redirect()->route('aset.approval')->with('success', 'Pengajuan aset telah ditolak.');
     }
@@ -169,6 +214,4 @@ class AssetController extends Controller
         // 4. Download file PDF dengan nama tertentu
         return $pdf->download('laporan-aset-pelindo.pdf');
     }
-
-    
 }
