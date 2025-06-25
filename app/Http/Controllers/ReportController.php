@@ -28,12 +28,12 @@ class ReportController extends Controller
                 $this->convertUtf8Recursive($value);
             }
         } elseif (is_object($input)) {
-            foreach ($input as $key => $value) {
-                $this->convertUtf8Recursive($input->$key);
+            foreach ($input as $key => &$value) {
+                $this->convertUtf8Recursive($value);
             }
         } elseif (is_string($input)) {
-            // Gunakan mb_detect_encoding supaya konversi lebih akurat
-            $encoding = mb_detect_encoding($input, 'UTF-8, ISO-8859-1', true);
+            // Deteksi encoding dulu, baru convert jika bukan UTF-8
+            $encoding = mb_detect_encoding($input, ['UTF-8', 'ISO-8859-1'], true);
             if ($encoding !== 'UTF-8') {
                 $input = mb_convert_encoding($input, 'UTF-8', $encoding ?: 'auto');
             }
@@ -56,7 +56,7 @@ class ReportController extends Controller
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
 
-        // Aman cari nama kategori dan lokasi
+        // Cari nama kategori dan lokasi dengan aman
         $categoryName = null;
         if ($categoryId) {
             $category = Category::find($categoryId);
