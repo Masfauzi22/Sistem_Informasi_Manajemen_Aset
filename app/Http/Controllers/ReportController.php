@@ -21,15 +21,19 @@ class ReportController extends Controller
         return view('pages.reports.index', compact('categories', 'locations'));
     }
 
-    // Fungsi bantu untuk memastikan data string sudah UTF-8
-    private function convertUtf8Recursive(&$array)
+    // Fungsi bantu untuk memastikan semua isi array/object dikonversi ke UTF-8
+    private function convertUtf8Recursive(&$input)
     {
-        foreach ($array as $key => &$value) {
-            if (is_array($value)) {
+        if (is_array($input)) {
+            foreach ($input as &$value) {
                 $this->convertUtf8Recursive($value);
-            } elseif (is_string($value)) {
-                $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
             }
+        } elseif (is_object($input)) {
+            foreach ($input as $key => $value) {
+                $this->convertUtf8Recursive($input->$key);
+            }
+        } elseif (is_string($input)) {
+            $input = mb_convert_encoding($input, 'UTF-8', 'UTF-8');
         }
     }
 
@@ -70,9 +74,9 @@ class ReportController extends Controller
             if ($startDate && $endDate) {
                 $query->whereBetween('purchase_date', [$startDate, $endDate]);
             }
-            $data['assets'] = $query->get();
 
-            $this->convertUtf8Recursive($data); // 🔧 FIX ENCODING
+            $data['assets'] = $query->get();
+            $this->convertUtf8Recursive($data);
             $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
@@ -90,7 +94,7 @@ class ReportController extends Controller
             }
 
             $data['loans'] = $query->latest()->get();
-            $this->convertUtf8Recursive($data); // 🔧 FIX ENCODING
+            $this->convertUtf8Recursive($data);
             $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
@@ -108,7 +112,7 @@ class ReportController extends Controller
             }
 
             $data['maintenances'] = $query->latest()->get();
-            $this->convertUtf8Recursive($data); // 🔧 FIX ENCODING
+            $this->convertUtf8Recursive($data);
             $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
         }
