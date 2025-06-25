@@ -45,7 +45,6 @@ class ReportController extends Controller
         $locationId = $request->input('location_id');
 
         // 3. Ambil nama kategori & lokasi, LALU LANGSUNG BERSIHKAN
-        // INI ADALAH BAGIAN YANG DIPERBAIKI
         $categoryName = $categoryId ? Category::find($categoryId)?->name : null;
         if ($categoryName) {
             $categoryName = mb_convert_encoding($categoryName, 'UTF-8', 'UTF-8');
@@ -56,13 +55,15 @@ class ReportController extends Controller
             $locationName = mb_convert_encoding($locationName, 'UTF-8', 'UTF-8');
         }
 
-        // 4. Siapkan data umum untuk dikirim ke view PDF
+        // 4. PERUBAHAN UNTUK TES DIAGNOSTIK
+        // Kita hanya akan mengirim 'date' untuk melihat apakah PDF bisa dibuat.
+        // Variabel lain dinonaktifkan sementara dengan tanda komentar (//).
         $data = [
             'date' => date('d/m/Y'),
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'categoryName' => $categoryName,
-            'locationName' => $locationName,
+            // 'startDate' => $startDate,
+            // 'endDate' => $endDate,
+            // 'categoryName' => $categoryName,
+            // 'locationName' => $locationName,
         ];
 
         // 5. Buat fungsi pembersih data yang akan dipakai berulang
@@ -70,7 +71,6 @@ class ReportController extends Controller
             return $collection->map(function ($item) {
                 foreach ($item->getAttributes() as $key => $value) {
                     if (is_string($value)) {
-                        // Paksa konversi ke UTF-8 untuk membersihkan karakter tidak valid
                         $item->{$key} = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
                     }
                 }
@@ -80,6 +80,9 @@ class ReportController extends Controller
 
         // 6. Proses sesuai jenis laporan yang dipilih
         if ($reportType === 'all_assets') {
+            // PERUBAHAN UNTUK TES DIAGNOSTIK
+            // Kita tidak akan mengambil data aset dulu untuk sementara.
+            /*
             $query = Asset::with(['category', 'location'])
                 ->where('status', '!=', 'Menunggu Persetujuan');
 
@@ -89,11 +92,14 @@ class ReportController extends Controller
 
             $assets = $query->get();
             $data['assets'] = $cleanData($assets);
+            */
 
-            $pdf = PDF::loadView('pages.reports.asset-pdf', []);
+            // Langsung coba buat PDF hanya dengan data tanggal
+            $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
         } elseif ($reportType === 'loan_history') {
+            // Bagian ini tidak kita ubah, karena kita fokus pada 'all_assets'
             $query = Loan::with(['user', 'asset.location', 'asset.category']);
 
             if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
@@ -103,10 +109,11 @@ class ReportController extends Controller
             $loans = $query->latest()->get();
             $data['loans'] = $cleanData($loans);
             
-            $pdf = PDF::loadView('pages.reports.loan-pdf', []);
+            $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
         } elseif ($reportType === 'maintenance_history') {
+            // Bagian ini tidak kita ubah
             $query = Maintenance::with(['asset.location', 'asset.category']);
 
             if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
@@ -116,11 +123,10 @@ class ReportController extends Controller
             $maintenances = $query->latest()->get();
             $data['maintenances'] = $cleanData($maintenances);
 
-            $pdf = PDF::loadView('pages.reports.maintenance-pdf', []);
+            $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
         }
 
-        // Jika jenis laporan tidak cocok, kembalikan ke halaman sebelumnya
         return redirect()->back()->with('error', 'Jenis laporan tidak valid.');
     }
 }
