@@ -44,10 +44,19 @@ class ReportController extends Controller
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
 
-        // 3. Siapkan data umum untuk dikirim ke view PDF
+        // 3. Ambil nama kategori & lokasi, LALU LANGSUNG BERSIHKAN
+        // INI ADALAH BAGIAN YANG DIPERBAIKI
         $categoryName = $categoryId ? Category::find($categoryId)?->name : null;
-        $locationName = $locationId ? Location::find($locationId)?->name : null;
+        if ($categoryName) {
+            $categoryName = mb_convert_encoding($categoryName, 'UTF-8', 'UTF-8');
+        }
 
+        $locationName = $locationId ? Location::find($locationId)?->name : null;
+        if ($locationName) {
+            $locationName = mb_convert_encoding($locationName, 'UTF-8', 'UTF-8');
+        }
+
+        // 4. Siapkan data umum untuk dikirim ke view PDF
         $data = [
             'date' => date('d/m/Y'),
             'startDate' => $startDate,
@@ -56,7 +65,7 @@ class ReportController extends Controller
             'locationName' => $locationName,
         ];
 
-        // 4. Buat fungsi pembersih data yang akan dipakai berulang
+        // 5. Buat fungsi pembersih data yang akan dipakai berulang
         $cleanData = function ($collection) {
             return $collection->map(function ($item) {
                 foreach ($item->getAttributes() as $key => $value) {
@@ -69,7 +78,7 @@ class ReportController extends Controller
             });
         };
 
-        // 5. Proses sesuai jenis laporan yang dipilih
+        // 6. Proses sesuai jenis laporan yang dipilih
         if ($reportType === 'all_assets') {
             $query = Asset::with(['category', 'location'])
                 ->where('status', '!=', 'Menunggu Persetujuan');
@@ -79,7 +88,7 @@ class ReportController extends Controller
             if ($startDate && $endDate) $query->whereBetween('purchase_date', [$startDate, $endDate]);
 
             $assets = $query->get();
-            $data['assets'] = $cleanData($assets); // Bersihkan data
+            $data['assets'] = $cleanData($assets);
 
             $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
@@ -92,7 +101,7 @@ class ReportController extends Controller
             if ($startDate && $endDate) $query->whereBetween('loan_date', [$startDate, $endDate]);
 
             $loans = $query->latest()->get();
-            $data['loans'] = $cleanData($loans); // Bersihkan data
+            $data['loans'] = $cleanData($loans);
             
             $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
@@ -105,7 +114,7 @@ class ReportController extends Controller
             if ($startDate && $endDate) $query->whereBetween('maintenance_date', [$startDate, $endDate]);
 
             $maintenances = $query->latest()->get();
-            $data['maintenances'] = $cleanData($maintenances); // Bersihkan data
+            $data['maintenances'] = $cleanData($maintenances);
 
             $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
