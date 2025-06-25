@@ -90,7 +90,7 @@ class ReportController extends Controller
             $assets = $query->get();
             $data['assets'] = $cleanData($assets);
 
-            $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
+            $pdf = PDF::loadView('pages.reports.asset-pdf', []);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
         } elseif ($reportType === 'loan_history') {
@@ -103,7 +103,7 @@ class ReportController extends Controller
             $loans = $query->latest()->get();
             $data['loans'] = $cleanData($loans);
             
-            $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
+            $pdf = PDF::loadView('pages.reports.loan-pdf', []);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
         } elseif ($reportType === 'maintenance_history') {
@@ -116,7 +116,7 @@ class ReportController extends Controller
             $maintenances = $query->latest()->get();
             $data['maintenances'] = $cleanData($maintenances);
 
-            $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
+            $pdf = PDF::loadView('pages.reports.maintenance-pdf', []);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
         }
 
