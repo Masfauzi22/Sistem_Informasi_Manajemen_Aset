@@ -13,45 +13,27 @@ use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
-    /**
-     * Menampilkan halaman utama untuk memilih jenis laporan.
-     */
     public function index()
     {
         $categories = Category::all();
         $locations = Location::all();
-
         return view('pages.reports.index', compact('categories', 'locations'));
     }
 
-    /**
-     * Membersihkan semua data string dalam array, objek, dan relasinya secara rekursif.
-     * Ini adalah versi yang lebih kuat untuk memastikan semua data bersih.
-     */
     private function cleanDataRecursively(&$data)
     {
-        // Jika data adalah koleksi, kita proses setiap item di dalamnya
         if ($data instanceof Collection) {
-            $data->transform(function ($item) {
-                return $this->cleanDataRecursively($item);
-            });
+            $data->transform(fn($item) => $this->cleanDataRecursively($item));
         } elseif (is_array($data) || is_object($data)) {
-            // Jika data adalah array atau objek, kita loop setiap propertinya
             foreach ($data as &$value) {
-                // Panggil fungsi ini lagi untuk setiap value (rekursif)
                 $this->cleanDataRecursively($value);
             }
         } elseif (is_string($data)) {
-            // Ini adalah intinya: paksa encoding ke UTF-8 untuk membersihkan karakter aneh
             $data = mb_convert_encoding($data, 'UTF-8', 'UTF-8');
         }
-
         return $data;
     }
 
-    /**
-     * Membuat dan men-stream laporan dalam format PDF berdasarkan input dari user.
-     */
     public function generate(Request $request)
     {
         $request->validate([
@@ -67,7 +49,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date');
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
-
+        
         $categoryName = $categoryId ? Category::find($categoryId)?->name : null;
         $locationName = $locationId ? Location::find($locationId)?->name : null;
 
@@ -78,11 +60,10 @@ class ReportController extends Controller
             'categoryName' => $categoryName,
             'locationName' => $locationName,
         ];
-        
-        // Membersihkan data awal (seperti categoryName dan locationName)
         $this->cleanDataRecursively($data);
 
         if ($reportType === 'all_assets') {
+            // --- KODE DIAGNOSTIK DIMULAI DI SINI ---
             $query = Asset::with(['category', 'location'])
                 ->where('status', '!=', 'Menunggu Persetujuan');
 
@@ -90,39 +71,44 @@ class ReportController extends Controller
             if ($locationId) $query->where('location_id', $locationId);
             if ($startDate && $endDate) $query->whereBetween('purchase_date', [$startDate, $endDate]);
 
-            $assets = $query->get();
-            $data['assets'] = $this->cleanDataRecursively($assets); // Panggil fungsi pembersih rekursif
+            // Ambil semua aset untuk diuji satu per satu
+            $allAssets = $query->get();
 
-            $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
-            return $pdf->stream('laporan-inventaris-aset.pdf');
+            echo "<h1>Memulai Pengujian " . count($allAssets) . " Aset...</h1>";
 
-        } elseif ($reportType === 'loan_history') {
-            $query = Loan::with(['user', 'asset.location', 'asset.category']);
+            foreach ($allAssets as $index => $singleAsset) {
+                echo "<strong>Menguji Aset ke-" . ($index + 1) . " (ID: " . $singleAsset->id . ") - " . $singleAsset->name . "</strong>... ";
 
-            if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
-            if ($locationId) $query->whereHas('asset', fn($q) => $q->where('location_id', $locationId));
-            if ($startDate && $endDate) $query->whereBetween('loan_date', [$startDate, $endDate]);
+                $testData = $data;
+                $collection = new Collection([$singleAsset]);
+                $testData['assets'] = $this->cleanDataRecursively($collection);
 
-            $loans = $query->latest()->get();
-            $data['loans'] = $this->cleanDataRecursively($loans); // Panggil fungsi pembersih rekursif
+                try {
+                    // Coba render PDF di memori tanpa menampilkannya
+                    PDF::loadView('pages.reports.asset-pdf', $testData)->render();
+                    echo "<span style='color:green;'>AMAN</span><br>";
+                } catch (\Exception $e) {
+                    // JIKA GAGAL, KITA MENEMUKAN PENYEBABNYA!
+                    echo "<hr><h1><span style='color:red;'>ERROR DITEMUKAN PADA ASET INI!</span></h1>";
+                    echo "<h3>Penyebab error `iconv()` kemungkinan besar ada pada data di bawah ini:</h3>";
+                    echo "<h4>Data Aset:</h4>";
+                    dump($singleAsset->toArray());
+                    echo "<h4>Data Kategori Terkait:</h4>";
+                    dump($singleAsset->category->toArray());
+                    echo "<h4>Data Lokasi Terkait:</h4>";
+                    dump($singleAsset->location->toArray());
+                    exit; // Hentikan proses
+                }
+            }
+
+            // Jika semua aset berhasil diuji tanpa error
+            echo "<hr><h1><span style='color:blue;'>Luar Biasa! Semua aset berhasil diproses tanpa error.</span></h1>";
+            echo "<p>Jika Anda melihat pesan ini, berarti masalahnya sangat-sangat aneh dan bukan disebabkan oleh data individual.</p>";
+            exit;
             
-            $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
-            return $pdf->stream('laporan-riwayat-peminjaman.pdf');
-
-        } elseif ($reportType === 'maintenance_history') {
-            $query = Maintenance::with(['asset.location', 'asset.category']);
-
-            if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
-            if ($locationId) $query->whereHas('asset', fn($q) => $q->where('location_id', $locationId));
-            if ($startDate && $endDate) $query->whereBetween('maintenance_date', [$startDate, $endDate]);
-
-            $maintenances = $query->latest()->get();
-            $data['maintenances'] = $this->cleanDataRecursively($maintenances); // Panggil fungsi pembersih rekursif
-
-            $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
-            return $pdf->stream('laporan-riwayat-perawatan.pdf');
+        } else {
+            // Untuk laporan lain, biarkan seperti biasa
+            return "Silakan uji Laporan Inventaris Aset.";
         }
-
-        return redirect()->back()->with('error', 'Jenis laporan tidak valid.');
     }
 }
