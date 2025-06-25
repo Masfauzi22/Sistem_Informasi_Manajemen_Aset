@@ -60,8 +60,8 @@ class ReportController extends Controller
         // Variabel lain dinonaktifkan sementara dengan tanda komentar (//).
         $data = [
             'date' => date('d/m/Y'),
-            // 'startDate' => $startDate,
-            // 'endDate' => $endDate,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
             // 'categoryName' => $categoryName,
             // 'locationName' => $locationName,
         ];
