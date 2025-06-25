@@ -63,7 +63,7 @@ class ReportController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
             'categoryName' => $categoryName,
-            // 'locationName' => $locationName,
+            'locationName' => $locationName,
         ];
 
         // 5. Buat fungsi pembersih data yang akan dipakai berulang
