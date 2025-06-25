@@ -33,7 +33,7 @@ class ReportController extends Controller
             }
         } elseif (is_string($input)) {
             // Deteksi encoding dulu, baru convert jika bukan UTF-8
-            $encoding = mb_detect_encoding($input, ['UTF-8', 'ISO-8859-1'], true);
+            $encoding = mb_detect_encoding($input, ['UTF-8', 'ISO-8859-1', 'ASCII'], true);
             if ($encoding !== 'UTF-8') {
                 $input = mb_convert_encoding($input, 'UTF-8', $encoding ?: 'auto');
             }
@@ -56,7 +56,7 @@ class ReportController extends Controller
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
 
-        // Cari nama kategori dan lokasi dengan aman
+        // Aman cari nama kategori dan lokasi
         $categoryName = null;
         if ($categoryId) {
             $category = Category::find($categoryId);
