@@ -9,7 +9,6 @@ use App\Models\Maintenance;
 use App\Models\Category;
 use App\Models\Location;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -21,7 +20,7 @@ class ReportController extends Controller
         return view('pages.reports.index', compact('categories', 'locations'));
     }
 
-    // Fungsi bantu untuk memastikan semua isi array/object dikonversi ke UTF-8
+    // Fungsi bantu memastikan semua data string sudah dalam UTF-8 (rekursif untuk array dan objek)
     private function convertUtf8Recursive(&$input)
     {
         if (is_array($input)) {
@@ -33,7 +32,11 @@ class ReportController extends Controller
                 $this->convertUtf8Recursive($input->$key);
             }
         } elseif (is_string($input)) {
-            $input = mb_convert_encoding($input, 'UTF-8', 'UTF-8');
+            // Gunakan mb_detect_encoding supaya konversi lebih akurat
+            $encoding = mb_detect_encoding($input, 'UTF-8, ISO-8859-1', true);
+            if ($encoding !== 'UTF-8') {
+                $input = mb_convert_encoding($input, 'UTF-8', $encoding ?: 'auto');
+            }
         }
     }
 
@@ -53,17 +56,29 @@ class ReportController extends Controller
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
 
+        // Aman cari nama kategori dan lokasi
+        $categoryName = null;
+        if ($categoryId) {
+            $category = Category::find($categoryId);
+            $categoryName = $category ? $category->name : null;
+        }
+        $locationName = null;
+        if ($locationId) {
+            $location = Location::find($locationId);
+            $locationName = $location ? $location->name : null;
+        }
+
         $data = [
             'date' => date('d/m/Y'),
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'categoryName' => $categoryId ? Category::find($categoryId)->name : null,
-            'locationName' => $locationId ? Location::find($locationId)->name : null,
+            'categoryName' => $categoryName,
+            'locationName' => $locationName,
         ];
 
-        if ($reportType == 'all_assets') {
+        if ($reportType === 'all_assets') {
             $query = Asset::with(['category', 'location'])
-                          ->where('status', '!=', 'Menunggu Persetujuan');
+                ->where('status', '!=', 'Menunggu Persetujuan');
 
             if ($categoryId) {
                 $query->where('category_id', $categoryId);
@@ -76,11 +91,12 @@ class ReportController extends Controller
             }
 
             $data['assets'] = $query->get();
+
             $this->convertUtf8Recursive($data);
             $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
-        } elseif ($reportType == 'loan_history') {
+        } elseif ($reportType === 'loan_history') {
             $query = Loan::with(['user', 'asset']);
 
             if ($categoryId) {
@@ -94,11 +110,12 @@ class ReportController extends Controller
             }
 
             $data['loans'] = $query->latest()->get();
+
             $this->convertUtf8Recursive($data);
             $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
-        } elseif ($reportType == 'maintenance_history') {
+        } elseif ($reportType === 'maintenance_history') {
             $query = Maintenance::with('asset');
 
             if ($categoryId) {
@@ -112,6 +129,7 @@ class ReportController extends Controller
             }
 
             $data['maintenances'] = $query->latest()->get();
+
             $this->convertUtf8Recursive($data);
             $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
