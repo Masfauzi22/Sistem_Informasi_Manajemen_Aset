@@ -6,37 +6,41 @@ use Illuminate\Http\Request;
 use App\Models\Asset;
 use App\Models\Loan;
 use App\Models\Maintenance;
-use App\Models\Category; // Panggil Model Category
-use App\Models\Location; // Panggil Model Location
+use App\Models\Category;
+use App\Models\Location;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    /**
-     * Menampilkan halaman utama untuk memilih laporan.
-     */
     public function index()
     {
-        // Ambil data untuk pilihan filter dropdown
         $categories = Category::all();
         $locations = Location::all();
-        
+
         return view('pages.reports.index', compact('categories', 'locations'));
     }
 
-    /**
-     * Memproses dan men-generate laporan PDF.
-     */
+    // Fungsi bantu untuk memastikan data string sudah UTF-8
+    private function convertUtf8Recursive(&$array)
+    {
+        foreach ($array as $key => &$value) {
+            if (is_array($value)) {
+                $this->convertUtf8Recursive($value);
+            } elseif (is_string($value)) {
+                $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+            }
+        }
+    }
+
     public function generate(Request $request)
     {
-        // Validasi input
         $request->validate([
             'report_type' => 'required|string',
             'start_date' => 'nullable|date_format:Y-m-d',
             'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date',
-            'category_id' => 'nullable|exists:categories,id', // Validasi filter baru
-            'location_id' => 'nullable|exists:locations,id', // Validasi filter baru
+            'category_id' => 'nullable|exists:categories,id',
+            'location_id' => 'nullable|exists:locations,id',
         ]);
 
         $reportType = $request->input('report_type');
@@ -44,16 +48,15 @@ class ReportController extends Controller
         $endDate = $request->input('end_date');
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
-        
+
         $data = [
             'date' => date('d/m/Y'),
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'categoryName' => $categoryId ? Category::find($categoryId)->name : null, // Tambahkan nama kategori untuk laporan
-            'locationName' => $locationId ? Location::find($locationId)->name : null, // Tambahkan nama lokasi untuk laporan
+            'categoryName' => $categoryId ? Category::find($categoryId)->name : null,
+            'locationName' => $locationId ? Location::find($locationId)->name : null,
         ];
-        
-        // Logika untuk memilih data dan view berdasarkan jenis laporan
+
         if ($reportType == 'all_assets') {
             $query = Asset::with(['category', 'location'])
                           ->where('status', '!=', 'Menunggu Persetujuan');
@@ -68,13 +71,14 @@ class ReportController extends Controller
                 $query->whereBetween('purchase_date', [$startDate, $endDate]);
             }
             $data['assets'] = $query->get();
-            mb_internal_encoding("UTF-8");
+
+            $this->convertUtf8Recursive($data); // 🔧 FIX ENCODING
             $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
         } elseif ($reportType == 'loan_history') {
             $query = Loan::with(['user', 'asset']);
-            
+
             if ($categoryId) {
                 $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
             }
@@ -84,9 +88,9 @@ class ReportController extends Controller
             if ($startDate && $endDate) {
                 $query->whereBetween('loan_date', [$startDate, $endDate]);
             }
-            
-            $data['loans'] = $query->latest()->get(); // Menambahkan latest() untuk pengurutan
-            mb_internal_encoding("UTF-8");
+
+            $data['loans'] = $query->latest()->get();
+            $this->convertUtf8Recursive($data); // 🔧 FIX ENCODING
             $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
@@ -102,9 +106,9 @@ class ReportController extends Controller
             if ($startDate && $endDate) {
                 $query->whereBetween('maintenance_date', [$startDate, $endDate]);
             }
-            
-            $data['maintenances'] = $query->latest()->get(); // Menambahkan latest() untuk pengurutan
-            mb_internal_encoding("UTF-8");
+
+            $data['maintenances'] = $query->latest()->get();
+            $this->convertUtf8Recursive($data); // 🔧 FIX ENCODING
             $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
         }
