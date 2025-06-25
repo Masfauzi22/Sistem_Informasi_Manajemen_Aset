@@ -68,6 +68,7 @@ class ReportController extends Controller
                 $query->whereBetween('purchase_date', [$startDate, $endDate]);
             }
             $data['assets'] = $query->get();
+            mb_internal_encoding("UTF-8");
             $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
@@ -85,6 +86,7 @@ class ReportController extends Controller
             }
             
             $data['loans'] = $query->latest()->get(); // Menambahkan latest() untuk pengurutan
+            mb_internal_encoding("UTF-8");
             $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
@@ -102,6 +104,7 @@ class ReportController extends Controller
             }
             
             $data['maintenances'] = $query->latest()->get(); // Menambahkan latest() untuk pengurutan
+            mb_internal_encoding("UTF-8");
             $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
         }
