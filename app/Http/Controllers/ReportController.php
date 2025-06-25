@@ -9,6 +9,7 @@ use App\Models\Maintenance;
 use App\Models\Category;
 use App\Models\Location;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
@@ -24,11 +25,35 @@ class ReportController extends Controller
     }
 
     /**
+     * Membersihkan semua data string dalam array, objek, dan relasinya secara rekursif.
+     * Ini adalah versi yang lebih kuat untuk memastikan semua data bersih.
+     */
+    private function cleanDataRecursively(&$data)
+    {
+        // Jika data adalah koleksi, kita proses setiap item di dalamnya
+        if ($data instanceof Collection) {
+            $data->transform(function ($item) {
+                return $this->cleanDataRecursively($item);
+            });
+        } elseif (is_array($data) || is_object($data)) {
+            // Jika data adalah array atau objek, kita loop setiap propertinya
+            foreach ($data as &$value) {
+                // Panggil fungsi ini lagi untuk setiap value (rekursif)
+                $this->cleanDataRecursively($value);
+            }
+        } elseif (is_string($data)) {
+            // Ini adalah intinya: paksa encoding ke UTF-8 untuk membersihkan karakter aneh
+            $data = mb_convert_encoding($data, 'UTF-8', 'UTF-8');
+        }
+
+        return $data;
+    }
+
+    /**
      * Membuat dan men-stream laporan dalam format PDF berdasarkan input dari user.
      */
     public function generate(Request $request)
     {
-        // 1. Validasi input dari form
         $request->validate([
             'report_type' => 'required|string',
             'start_date' => 'nullable|date_format:Y-m-d',
@@ -37,27 +62,15 @@ class ReportController extends Controller
             'location_id' => 'nullable|exists:locations,id',
         ]);
 
-        // 2. Ambil semua data input
         $reportType = $request->input('report_type');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $categoryId = $request->input('category_id');
         $locationId = $request->input('location_id');
 
-        // 3. Ambil nama kategori & lokasi, LALU LANGSUNG BERSIHKAN
         $categoryName = $categoryId ? Category::find($categoryId)?->name : null;
-        if ($categoryName) {
-            $categoryName = mb_convert_encoding($categoryName, 'UTF-8', 'UTF-8');
-        }
-
         $locationName = $locationId ? Location::find($locationId)?->name : null;
-        if ($locationName) {
-            $locationName = mb_convert_encoding($locationName, 'UTF-8', 'UTF-8');
-        }
 
-        // 4. PERUBAHAN UNTUK TES DIAGNOSTIK
-        // Kita hanya akan mengirim 'date' untuk melihat apakah PDF bisa dibuat.
-        // Variabel lain dinonaktifkan sementara dengan tanda komentar (//).
         $data = [
             'date' => date('d/m/Y'),
             'startDate' => $startDate,
@@ -65,24 +78,11 @@ class ReportController extends Controller
             'categoryName' => $categoryName,
             'locationName' => $locationName,
         ];
+        
+        // Membersihkan data awal (seperti categoryName dan locationName)
+        $this->cleanDataRecursively($data);
 
-        // 5. Buat fungsi pembersih data yang akan dipakai berulang
-        $cleanData = function ($collection) {
-            return $collection->map(function ($item) {
-                foreach ($item->getAttributes() as $key => $value) {
-                    if (is_string($value)) {
-                        $item->{$key} = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
-                    }
-                }
-                return $item;
-            });
-        };
-
-        // 6. Proses sesuai jenis laporan yang dipilih
         if ($reportType === 'all_assets') {
-            // PERUBAHAN UNTUK TES DIAGNOSTIK
-            // Kita tidak akan mengambil data aset dulu untuk sementara.
-            /*
             $query = Asset::with(['category', 'location'])
                 ->where('status', '!=', 'Menunggu Persetujuan');
 
@@ -91,15 +91,12 @@ class ReportController extends Controller
             if ($startDate && $endDate) $query->whereBetween('purchase_date', [$startDate, $endDate]);
 
             $assets = $query->get();
-            $data['assets'] = $cleanData($assets);
-            */
+            $data['assets'] = $this->cleanDataRecursively($assets); // Panggil fungsi pembersih rekursif
 
-            // Langsung coba buat PDF hanya dengan data tanggal
             $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
             return $pdf->stream('laporan-inventaris-aset.pdf');
 
         } elseif ($reportType === 'loan_history') {
-            // Bagian ini tidak kita ubah, karena kita fokus pada 'all_assets'
             $query = Loan::with(['user', 'asset.location', 'asset.category']);
 
             if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
@@ -107,13 +104,12 @@ class ReportController extends Controller
             if ($startDate && $endDate) $query->whereBetween('loan_date', [$startDate, $endDate]);
 
             $loans = $query->latest()->get();
-            $data['loans'] = $cleanData($loans);
+            $data['loans'] = $this->cleanDataRecursively($loans); // Panggil fungsi pembersih rekursif
             
             $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
             return $pdf->stream('laporan-riwayat-peminjaman.pdf');
 
         } elseif ($reportType === 'maintenance_history') {
-            // Bagian ini tidak kita ubah
             $query = Maintenance::with(['asset.location', 'asset.category']);
 
             if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
@@ -121,7 +117,7 @@ class ReportController extends Controller
             if ($startDate && $endDate) $query->whereBetween('maintenance_date', [$startDate, $endDate]);
 
             $maintenances = $query->latest()->get();
-            $data['maintenances'] = $cleanData($maintenances);
+            $data['maintenances'] = $this->cleanDataRecursively($maintenances); // Panggil fungsi pembersih rekursif
 
             $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
             return $pdf->stream('laporan-riwayat-perawatan.pdf');
