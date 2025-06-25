@@ -62,7 +62,7 @@ class ReportController extends Controller
             'date' => date('d/m/Y'),
             'startDate' => $startDate,
             'endDate' => $endDate,
-            // 'categoryName' => $categoryName,
+            'categoryName' => $categoryName,
             // 'locationName' => $locationName,
         ];
 
