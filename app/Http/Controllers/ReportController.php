@@ -63,7 +63,6 @@ class ReportController extends Controller
         $this->cleanDataRecursively($data);
 
         if ($reportType === 'all_assets') {
-            // --- KODE DIAGNOSTIK DIMULAI DI SINI ---
             $query = Asset::with(['category', 'location'])
                 ->where('status', '!=', 'Menunggu Persetujuan');
 
@@ -71,44 +70,39 @@ class ReportController extends Controller
             if ($locationId) $query->where('location_id', $locationId);
             if ($startDate && $endDate) $query->whereBetween('purchase_date', [$startDate, $endDate]);
 
-            // Ambil semua aset untuk diuji satu per satu
-            $allAssets = $query->get();
+            $assets = $query->get();
+            $data['assets'] = $this->cleanDataRecursively($assets);
 
-            echo "<h1>Memulai Pengujian " . count($allAssets) . " Aset...</h1>";
+            $pdf = PDF::loadView('pages.reports.asset-pdf', $data);
+            return $pdf->stream('laporan-inventaris-aset.pdf');
 
-            foreach ($allAssets as $index => $singleAsset) {
-                echo "<strong>Menguji Aset ke-" . ($index + 1) . " (ID: " . $singleAsset->id . ") - " . $singleAsset->name . "</strong>... ";
+        } elseif ($reportType === 'loan_history') {
+            $query = Loan::with(['user', 'asset.location', 'asset.category']);
 
-                $testData = $data;
-                $collection = new Collection([$singleAsset]);
-                $testData['assets'] = $this->cleanDataRecursively($collection);
+            if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
+            if ($locationId) $query->whereHas('asset', fn($q) => $q->where('location_id', $locationId));
+            if ($startDate && $endDate) $query->whereBetween('loan_date', [$startDate, $endDate]);
 
-                try {
-                    // Coba render PDF di memori tanpa menampilkannya
-                    PDF::loadView('pages.reports.asset-pdf', $testData)->render();
-                    echo "<span style='color:green;'>AMAN</span><br>";
-                } catch (\Exception $e) {
-                    // JIKA GAGAL, KITA MENEMUKAN PENYEBABNYA!
-                    echo "<hr><h1><span style='color:red;'>ERROR DITEMUKAN PADA ASET INI!</span></h1>";
-                    echo "<h3>Penyebab error `iconv()` kemungkinan besar ada pada data di bawah ini:</h3>";
-                    echo "<h4>Data Aset:</h4>";
-                    dump($singleAsset->toArray());
-                    echo "<h4>Data Kategori Terkait:</h4>";
-                    dump($singleAsset->category->toArray());
-                    echo "<h4>Data Lokasi Terkait:</h4>";
-                    dump($singleAsset->location->toArray());
-                    exit; // Hentikan proses
-                }
-            }
-
-            // Jika semua aset berhasil diuji tanpa error
-            echo "<hr><h1><span style='color:blue;'>Luar Biasa! Semua aset berhasil diproses tanpa error.</span></h1>";
-            echo "<p>Jika Anda melihat pesan ini, berarti masalahnya sangat-sangat aneh dan bukan disebabkan oleh data individual.</p>";
-            exit;
+            $loans = $query->latest()->get();
+            $data['loans'] = $this->cleanDataRecursively($loans);
             
-        } else {
-            // Untuk laporan lain, biarkan seperti biasa
-            return "Silakan uji Laporan Inventaris Aset.";
+            $pdf = PDF::loadView('pages.reports.loan-pdf', $data);
+            return $pdf->stream('laporan-riwayat-peminjaman.pdf');
+
+        } elseif ($reportType === 'maintenance_history') {
+            $query = Maintenance::with(['asset.location', 'asset.category']);
+
+            if ($categoryId) $query->whereHas('asset', fn($q) => $q->where('category_id', $categoryId));
+            if ($locationId) $query->whereHas('asset', fn($q) => $q->where('location_id', $locationId));
+            if ($startDate && $endDate) $query->whereBetween('maintenance_date', [$startDate, $endDate]);
+
+            $maintenances = $query->latest()->get();
+            $data['maintenances'] = $this->cleanDataRecursively($maintenances);
+
+            $pdf = PDF::loadView('pages.reports.maintenance-pdf', $data);
+            return $pdf->stream('laporan-riwayat-perawatan.pdf');
         }
+
+        return redirect()->back()->with('error', 'Jenis laporan tidak valid.');
     }
 }
