@@ -17,18 +17,13 @@
         text-align: center;
         margin-bottom: 20px;
         display: flex;
-        /* Menggunakan flexbox untuk penempatan logo dan teks */
         align-items: center;
-        /* Pusatkan item secara vertikal */
         justify-content: center;
-        /* Pusatkan item secara horizontal */
         gap: 15px;
-        /* Jarak antara logo dan teks */
     }
 
     .header-content {
         text-align: center;
-        /* Pastikan teks di dalam div ini tetap di tengah */
     }
 
     .header h1 {
@@ -45,11 +40,7 @@
 
     .logo {
         max-width: 80px;
-        /* Atur lebar maksimal logo */
         height: auto;
-        /* Biarkan tinggi menyesuaikan proporsi */
-        margin-right: 10px;
-        /* Jarak antara logo dan teks header (opsional, jika ingin logo di kiri) */
     }
 
     hr {
@@ -82,12 +73,10 @@
         padding: 10px 10px;
     }
 
-    /* Warna baris selang-seling */
     tr:nth-child(even) {
         background-color: #f9f9f9;
     }
 
-    /* Penyelarasan spesifik kolom */
     td:first-child {
         text-align: center;
         width: 30px;
@@ -98,7 +87,6 @@
         white-space: nowrap;
     }
 
-    /* Tidak ada data */
     .no-data {
         text-align: center;
         padding: 20px;
@@ -109,16 +97,31 @@
 </head>
 
 <body>
+    @php
+    // --- PERBAIKAN DIMULAI DI SINI ---
+    // Konversi gambar ke format Base64 untuk di-embed langsung ke HTML.
+    // Ini adalah cara paling andal untuk DomPDF.
+    $imagePath = public_path('images/logo-pelindo.png');
+    $base64Image = '';
+    if (file_exists($imagePath)) {
+    $fileType = pathinfo($imagePath, PATHINFO_EXTENSION);
+    $imageData = base64_encode(file_get_contents($imagePath));
+    $base64Image = 'data:image/' . $fileType . ';base64,' . $imageData;
+    }
+    @endphp
+
     <div class="header">
-        {{-- Pastikan jalur gambar benar dan bisa diakses oleh PDF renderer (misal: Dompdf) --}}
-        {{-- Untuk Laravel/Dompdf, gunakan public_path() atau base64 encode gambar --}}
-        <img src="{{ public_path('images/logo-pelindo.png') }}" alt="Logo Perusahaan" class="logo">
+        {{-- Tampilkan gambar hanya jika file-nya ada dan berhasil dikonversi --}}
+        @if($base64Image)
+        <img src="{{ $base64Image }}" alt="Logo Perusahaan" class="logo">
+        @endif
+
         <div class="header-content">
             <h1>Laporan Inventaris Aset</h1>
             <p>PT. Pelindo Multi Terminal</p>
-            <p>Tanggal Laporan: {{ $date }}</p>
+            <p>Tanggal Laporan: {{ $date ?? 'N/A' }}</p>
 
-            @if ($startDate && $endDate)
+            @if (isset($startDate) && isset($endDate) && $startDate && $endDate)
             <p>Periode: {{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} -
                 {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}</p>
             @endif
@@ -139,15 +142,16 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($assets as $asset)
+            @forelse ($assets ?? [] as $asset)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ $asset->name }}</td>
-                <td>{{ $asset->category->name }}</td>
-                <td>{{ $asset->location->name }}</td>
+                <td>{{ $asset->name ?? 'N/A' }}</td>
+                <td>{{ $asset->category->name ?? 'N/A' }}</td>
+                <td>{{ $asset->location->name ?? 'N/A' }}</td>
                 <td>{{ $asset->serial_number ?? '-' }}</td>
-                <td>{{ \Carbon\Carbon::parse($asset->purchase_date)->format('d-m-Y') }}</td>
-                <td>{{ number_format($asset->purchase_price, 0, ',', '.') }}</td>
+                <td>{{ isset($asset->purchase_date) ? \Carbon\Carbon::parse($asset->purchase_date)->format('d-m-Y') : 'N/A' }}
+                </td>
+                <td>{{ isset($asset->purchase_price) ? number_format($asset->purchase_price, 0, ',', '.') : '0' }}</td>
             </tr>
             @empty
             <tr>
